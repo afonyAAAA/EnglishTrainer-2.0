@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'kotlin-kapt'
 }
 
 android {
@@ -47,7 +48,6 @@ android {
 }
 
 dependencies {
-
     implementation "androidx.compose.animation:animation:1.4.3"
     implementation "androidx.compose.foundation:foundation:1.4.3"
     implementation 'androidx.activity:activity-compose:1.7.2'
@@ -60,4 +60,21 @@ dependencies {
     implementation "androidx.wear.compose:compose-foundation:1.1.2"
     implementation "androidx.wear.compose:compose-material:1.1.2"
     implementation "androidx.wear.compose:compose-navigation:1.1.2"
+
+    // RxJava
+    implementation 'io.reactivex.rxjava3:rxjava:3.0.0'
+    implementation 'io.reactivex.rxjava3:rxandroid:3.0.0'
+
+    // Retrofit
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.squareup.retrofit2:adapter-rxjava3:2.9.0'
+
+    //Koin
+    implementation "io.insert-koin:koin-core:3.4.1"
+
+    //Room
+    implementation "androidx.room:room-runtime:2.5.2"
+    kapt "androidx.room:room-compiler:2.5.2"
+    implementation "androidx.room:room-ktx:2.5.2"
 }

@@ -3,39 +3,34 @@ package ru.fi.englishtrainer20
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
+import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import ru.fi.englishtrainer20.ui.theme.EnglishTrainer20Theme
+import ru.fi.englishtrainer20.ui.theme.EnglishTrainerTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            EnglishTrainer20Theme {
-                // A surface container using the 'background' color from the theme
-                Surface(modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colors.background) {
-                    Greeting("Android")
-                }
+            EnglishTrainerTheme {
+
             }
         }
     }
 }
 
 @Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
-}
+fun ScaffoldTrainer(){
+    Scaffold(
+        topBar = {
 
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    EnglishTrainer20Theme {
-        Greeting("Android")
-    }
+        },
+        bottomBar = {
+
+        },
+        content = {
+
+        }
+    )
 }

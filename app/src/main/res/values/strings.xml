@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">EnglishTrainer2.0</string>
+    <string name="Trainer">Тренажёр</string>
+    <string name="StartTrainer">Начать</string>
 </resources>

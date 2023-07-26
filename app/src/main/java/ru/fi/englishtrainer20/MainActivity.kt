@@ -4,9 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
+import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
+import ru.fi.englishtrainer20.navigation.NavHostTrainer
 import ru.fi.englishtrainer20.ui.theme.EnglishTrainerTheme
 
 class MainActivity : ComponentActivity() {
@@ -14,7 +14,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             EnglishTrainerTheme {
-
+                ScaffoldTrainer()
             }
         }
     }
@@ -23,14 +23,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun ScaffoldTrainer(){
     Scaffold(
-        topBar = {
-
-        },
-        bottomBar = {
-
-        },
         content = {
-
+            NavHostTrainer(it)
         }
     )
 }

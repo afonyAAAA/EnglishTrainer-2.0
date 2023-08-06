@@ -3,8 +3,7 @@ package ru.fi.englishtrainer20
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material.Scaffold
-import androidx.compose.material.TopAppBar
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import ru.fi.englishtrainer20.navigation.NavHostTrainer
 import ru.fi.englishtrainer20.ui.theme.EnglishTrainerTheme
@@ -17,6 +16,7 @@ class MainActivity : ComponentActivity() {
                 ScaffoldTrainer()
             }
         }
+
     }
 }
 
@@ -24,7 +24,7 @@ class MainActivity : ComponentActivity() {
 fun ScaffoldTrainer(){
     Scaffold(
         content = {
-            NavHostTrainer(it)
+            NavHostTrainer()
         }
     )
 }

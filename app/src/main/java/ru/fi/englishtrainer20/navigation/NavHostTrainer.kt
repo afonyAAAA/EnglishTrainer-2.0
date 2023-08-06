@@ -8,25 +8,30 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import ru.fi.englishtrainer20.screens.MainScreen
+import ru.fi.englishtrainer20.screens.TrainerScreen
 
 sealed class NavRoutes(val route : String){
     object Main : NavRoutes("main_screen")
+    object Trainer : NavRoutes("trainer_screen")
+
 }
 
 
 
 @Composable
-fun NavHostTrainer(paddingValues: PaddingValues) {
+fun NavHostTrainer() {
 
     val navHostController = rememberNavController()
 
     NavHost(
         navController = navHostController,
-        startDestination = NavRoutes.Main.route,
-        modifier = Modifier.padding(paddingValues)
+        startDestination = NavRoutes.Main.route
     ){
         composable(NavRoutes.Main.route){
-            MainScreen(navHostController)
+            MainScreen(navHostController = navHostController)
+        }
+        composable(NavRoutes.Trainer.route){
+            TrainerScreen(navHostController = navHostController)
         }
     }
 

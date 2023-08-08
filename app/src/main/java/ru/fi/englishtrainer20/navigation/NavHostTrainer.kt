@@ -16,8 +16,6 @@ sealed class NavRoutes(val route : String){
 
 }
 
-
-
 @Composable
 fun NavHostTrainer() {
 

@@ -1,9 +1,5 @@
 package ru.fi.englishtrainer20.viewModels
 
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.*
@@ -15,51 +11,64 @@ import ru.fi.englishtrainer20.repository.trainer.TrainerRepository
 import ru.fi.englishtrainer20.repository.trainer.TrainerResults
 import ru.fi.englishtrainer20.stateClasses.TrainerState
 
-
 class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() {
 
-    var trainerState = TrainerState()
+    private var trainerState = TrainerState()
+
+    val listWords = trainerState._listWords.asStateFlow()
+    val targetWord = trainerState._targetWord.asStateFlow()
 
     private val trainerChannel = Channel<TrainerResults<Unit>>()
 
     val trainerResults = trainerChannel.receiveAsFlow()
 
     init {
-        viewModelScope.launch {
-            trainerState = trainerState.copy(isLoading = true)
 
-            getEnglishWords()
+        trainerState = trainerState.copy(isLoading = true)
 
-            trainerState = trainerState.copy(
-                targetWord = getNextWord()
-            )
+        getEnglishWords()
 
-            trainerState = trainerState.copy(isLoading = false)
-        }
+        getNextWord()
+
+        trainerState = trainerState.copy(isLoading = false)
+
     }
 
     fun onEvent(e : TrainerUIEvents){
         when(e){
             is TrainerUIEvents.UserChooseWord -> {
-
+                checkCorrectOfWords()
+            }
+            TrainerUIEvents.NextWord -> {
+                getNextWord()
             }
         }
     }
 
-    private fun getNextWord() : EnglishWord{
+    private fun getNextWord(){
 
-        val nextWord = trainerState.listWords[trainerState.counterWord].word
-        val nextCorrectWords = trainerState.listWords[trainerState.counterWord].russianWords
+        val nextWord = trainerState._listWords.value[trainerState.counterWord].word
+        val nextCorrectWords = trainerState._listWords.value[trainerState.counterWord].russianWords
 
-        return EnglishWord(nextWord, nextCorrectWords)
+        trainerState = trainerState.copy(
+            _targetWord = MutableStateFlow(EnglishWord(nextWord, nextCorrectWords))
+        )
     }
 
-    fun checkCorrectOfWords() {
-
+    private fun checkCorrectOfWords() {
+        viewModelScope.launch {
+            if(targetWord.value.russianWords.any { it == trainerState.chooseWord }){
+                trainerChannel.send(TrainerResults.CorrectedWord())
+            }
+        }
     }
 
-    private suspend fun getEnglishWords(){
-        trainerState = trainerState.copy(listWords = repository.getEnglishWords())
+    private fun getEnglishWords(){
+        viewModelScope.launch {
+            trainerState = trainerState.copy(
+                _listWords = MutableStateFlow(repository.getEnglishWords())
+            )
+        }
     }
 
 //    fun countResult(){

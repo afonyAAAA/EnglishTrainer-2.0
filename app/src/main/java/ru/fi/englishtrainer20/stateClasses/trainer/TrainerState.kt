@@ -6,9 +6,9 @@ import ru.fi.englishtrainer20.models.EnglishWord
 
 data class TrainerState(
     val isLoading : Boolean = false,
-    var _listWords : MutableStateFlow<List<EnglishWord>> = MutableStateFlow(emptyList()),
-    var _targetWord : MutableStateFlow<EnglishWord> = MutableStateFlow(EnglishWord()),
-    var _otherWords : MutableStateFlow<List<String>> = MutableStateFlow(emptyList()),
+    val listWords : List<EnglishWord> = mutableListOf(),
+    val targetWord : EnglishWord = EnglishWord(),
+    val otherWords : List<String> = listOf(),
     val quantityWords : Int = 0,
     val quantityCorrect : Int = 0,
     val counterWord : Int = 0,

@@ -3,17 +3,26 @@ package ru.fi.englishtrainer20.screens
 import android.annotation.SuppressLint
 import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.TweenSpec
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
@@ -28,7 +37,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,6 +47,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import ru.fi.englishtrainer20.elementsInterface.CustomButton
 import ru.fi.englishtrainer20.events.TrainerUIEvents
@@ -58,10 +68,6 @@ fun TrainerScreen(navHostController: NavHostController){
     val stateTrainer = trainerViewModel.trainerState
     val stateElementsTrainer = trainerViewModel.elementsTrainerState
 
-    val targetWord = trainerViewModel.targetWord.collectAsState().value
-
-    val otherWords = trainerViewModel.otherWords.collectAsState().value
-
     Scaffold(
         snackbarHost = {
             SnackbarHost(hostState = stateElementsTrainer.snackBarHostState)
@@ -72,12 +78,9 @@ fun TrainerScreen(navHostController: NavHostController){
                 modifier = Modifier.fillMaxSize()
             ) {
                 AnimationTargetWord(visible = stateAnimationTrainer.shiftTargetWord) {
-                    PresentCardWord(targetWord.word)
+                    PresentCardWord(stateTrainer.targetWord.word)
                 }
-                AnimationListWords(visible = stateAnimationTrainer.shiftListWords) {
-                    ListWords(otherWords, trainerViewModel)
-                }
-
+                ListWords(stateTrainer.otherWords, trainerViewModel)
             }
         }
     }
@@ -106,9 +109,12 @@ fun ListenerResults(trainerViewModel: TrainerViewModel, context : Context){
 }
 
 @Composable
-fun AnimationStartTrainer(visible : Boolean, content : @Composable () -> Unit){
+fun AnimationStartTrainer(
+    visible : MutableTransitionState<Boolean>,
+    content : @Composable () -> Unit
+){
     AnimatedVisibility(
-        visible = visible,
+        visibleState = visible,
         enter = fadeIn(),
         exit = fadeOut()
     ) {
@@ -117,21 +123,30 @@ fun AnimationStartTrainer(visible : Boolean, content : @Composable () -> Unit){
 }
 
 @Composable
-fun AnimationTargetWord(visible : Boolean, content : @Composable () -> Unit){
+fun AnimationTargetWord(
+    visible : MutableTransitionState<Boolean>,
+    content : @Composable () -> Unit
+){
     AnimatedVisibility(
-        visible = visible,
-        enter = slideInHorizontally(),
-        exit = slideOutHorizontally(targetOffsetX = {it / 2})
+        visibleState = visible,
+        enter = slideInHorizontally(animationSpec = TweenSpec(300, 200)) + expandHorizontally(expandFrom = Alignment.End) + fadeIn(),
+        exit = slideOutHorizontally(targetOffsetX = {it -> it}) + shrinkHorizontally() + fadeOut()
     ) {
         content()
     }
 }
 @Composable
-fun AnimationListWords(visible : Boolean, content : @Composable () -> Unit){
+fun AnimationListWords(
+    visible : MutableTransitionState<Boolean>,
+    content : @Composable () -> Unit
+){
     AnimatedVisibility(
-        visible = visible,
-        enter = slideInVertically(),
-        exit = slideOutVertically()
+        visibleState = visible,
+        enter = slideInVertically(
+            initialOffsetY = {it / 2},
+            animationSpec = TweenSpec(500, 500))
+                + expandVertically(initialHeight = {it / 2}),
+        exit = slideOutVertically(targetOffsetY = {it / 2}) + fadeOut()
     ) {
         content()
     }
@@ -216,6 +231,7 @@ fun InfoWordsLayout(){
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ListItemCardWord(
     word : String,
@@ -237,7 +253,7 @@ fun ListItemCardWord(
             contentAlignment = Alignment.Center
         ){
             Text(
-                text = word,
+                text = word
             )
         }
     }
@@ -245,9 +261,13 @@ fun ListItemCardWord(
 
 @Composable
 fun ListWords(words : List<String>, viewModel: TrainerViewModel){
+
+
     LazyColumn{
         items(items = words){ word ->
-            ListItemCardWord(word = word, viewModel)
+            AnimationListWords(visible = viewModel.animationTrainerState.shiftListWords) {
+                ListItemCardWord(word = word, viewModel)
+            }
         }
     }
 }

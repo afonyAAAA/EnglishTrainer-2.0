@@ -1,5 +1,6 @@
 package ru.fi.englishtrainer20.viewModels
 
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -22,22 +23,26 @@ class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() 
     var animationTrainerState by mutableStateOf(AnimationTrainerState())
     var elementsTrainerState by mutableStateOf(UIElementsTrainerState())
 
-    val listWords = trainerState._listWords.asStateFlow()
     val targetWord = trainerState._targetWord.asStateFlow()
+    val otherWords = trainerState._otherWords.asStateFlow()
 
     private val trainerChannel = Channel<TrainerResults<Unit>>()
     val trainerResults = trainerChannel.receiveAsFlow()
+
+    init {
+        getEnglishWords(10)
+    }
 
     fun onEvent(e : TrainerUIEvents){
         when(e){
             is TrainerUIEvents.UserChooseWord -> {
                 checkCorrectOfWords(e.word)
             }
+            is TrainerUIEvents.GetEnglishWord -> {
+                getEnglishWords(e.quantityWords)
+            }
             TrainerUIEvents.NextWord -> {
                 getNextWord()
-            }
-            TrainerUIEvents.GetEnglishWord -> {
-                getEnglishWords()
             }
             TrainerUIEvents.TrainerIsReady -> {
                 startTrainer()
@@ -51,6 +56,35 @@ class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() 
         val nextCorrectWords = trainerState._listWords.value[trainerState.counterWord].russianWords
 
         trainerState._targetWord.value = EnglishWord(nextWord, nextCorrectWords)
+
+        getNextOtherWords()
+
+        animationTrainerState = animationTrainerState.copy(
+            shiftTargetWord = MutableTransitionState(),
+            shiftListWords = true
+        )
+
+    }
+
+    private fun getNextOtherWords(){
+
+        val listWords : MutableList<String> = mutableListOf()
+
+        repeat(2) {
+            var otherWord : String? = null
+
+            do {
+                 otherWord = trainerState._listWords.value.random().russianWords.firstOrNull { !listWords.contains(it) }
+            }while (otherWord == null)
+
+            listWords.add(otherWord)
+        }
+
+        val correctWord = trainerState._targetWord.value.russianWords.random()
+        listWords.add(correctWord)
+
+        trainerState._otherWords.value = listWords
+
     }
 
     private fun checkCorrectOfWords(chooseWord : String) {
@@ -65,22 +99,22 @@ class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() 
 
     private fun startTrainer(){
 
-        trainerState._listWords.value.shuffled()
-
         getNextWord()
 
         animationTrainerState = animationTrainerState.copy(
-            fade = true
+             startTrainer = true
         )
 
     }
 
-    private fun getEnglishWords(){
+    private fun getEnglishWords(quantityWords : Int){
         viewModelScope.launch {
 
-            val words = repository.getEnglishWords()
+            val words = repository.getEnglishWords(quantityWords)
 
-            trainerState._listWords.value = words
+            val shuffledWords = words.shuffled()
+
+            trainerState._listWords.value = shuffledWords
 
             if(trainerState._listWords.value.isNotEmpty()){
                 trainerChannel.send(TrainerResults.WordsIsLoaded())

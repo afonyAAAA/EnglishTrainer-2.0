@@ -4,5 +4,5 @@ import ru.fi.englishtrainer20.models.EnglishWord
 
 
 interface TrainerRepository {
-    suspend fun getEnglishWords() : List<EnglishWord>
+    suspend fun getEnglishWords(limit : Int) : List<EnglishWord>
 }

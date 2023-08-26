@@ -16,6 +16,8 @@ import ru.fi.englishtrainer20.repository.trainer.TrainerResults
 import ru.fi.englishtrainer20.stateClasses.trainer.AnimationTrainerState
 import ru.fi.englishtrainer20.stateClasses.trainer.TrainerState
 import ru.fi.englishtrainer20.stateClasses.trainer.UIElementsTrainerState
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() {
 
@@ -33,7 +35,14 @@ class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() 
     fun onEvent(e : TrainerUIEvents){
         when(e){
             is TrainerUIEvents.UserChooseWord -> {
-                checkCorrectOfWords(e.word)
+
+                trainerState = trainerState.copy(
+                    counterWord = trainerState.counterWord + 1,
+                    chooseWord = trainerState.listWords.find { it.russianWords.contains(e.word) } ?: EnglishWord()
+                )
+
+                checkCorrectOfWords()
+
             }
             is TrainerUIEvents.GetEnglishWord -> {
                 getEnglishWords(e.quantityWords)
@@ -44,36 +53,68 @@ class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() 
             TrainerUIEvents.TrainerIsReady -> {
                 startTrainer()
             }
-        }
-    }
-
-    private fun getNextWord(){
-
-
-        viewModelScope.launch {
-            if(trainerState.counterWord != 0){
-                animationTrainerState = animationTrainerState.copy(
-                    shiftTargetWord = MutableTransitionState(true).apply { this.targetState = false },
-                    shiftListWords = MutableTransitionState(true).apply { this.targetState = false }
+            TrainerUIEvents.ShowNegativeSnackBar -> {
+                viewModelScope.launch {
+                    trainerState = trainerState.copy(
+                        lastResult = false
+                    )
+                    elementsTrainerState.snackBarHostState.showSnackbar(
+                        "Неправильно"
+                    )
+                }
+            }
+            TrainerUIEvents.ShowPositiveSnackBar -> {
+                viewModelScope.launch {
+                    trainerState = trainerState.copy(
+                        lastResult = true
+                    )
+                    elementsTrainerState.snackBarHostState.showSnackbar(
+                        "Правильно"
+                    )
+                }
+            }
+            TrainerUIEvents.InfoButtonIsClicked -> {
+                viewModelScope.launch {
+                    elementsTrainerState = if(trainerState.lastResult){
+                        elementsTrainerState.copy(
+                            statePositiveDialog = true
+                        )
+                    }else {
+                        elementsTrainerState.copy(
+                            stateNegativeDialog = true
+                        )
+                    }
+                }
+            }
+            TrainerUIEvents.DismissInfoWords -> {
+                elementsTrainerState = elementsTrainerState.copy(
+                    stateNegativeDialog = false,
+                    statePositiveDialog = false
                 )
             }
 
-            delay(1500L)
-
-            animationTrainerState = animationTrainerState.copy(
-                shiftTargetWord = MutableTransitionState(false).apply { this.targetState = true },
-                shiftListWords = MutableTransitionState(false).apply { this.targetState = true }
-            )
+            TrainerUIEvents.EndAnimationTransitionPresentWord -> {
+                animationTrainerState = animationTrainerState.copy(
+                    backForwardTrainer = Pair(animationTrainerState.backForwardTrainer.first, true)
+                )
+            }
         }
+    }
+    private fun getNextWord(){
+        viewModelScope.launch {
 
-        trainerState = trainerState.copy(counterWord = trainerState.counterWord + 1)
+            playAnimationWords()
 
-        val nextWord = trainerState.listWords[trainerState.counterWord].word
-        val nextCorrectWords = trainerState.listWords[trainerState.counterWord].russianWords
+            val nextWord = trainerState.listWords[trainerState.counterWord].word
+            val nextCorrectWords = trainerState.listWords[trainerState.counterWord].russianWords
 
-        trainerState = trainerState.copy(targetWord = EnglishWord(nextWord, nextCorrectWords))
+            trainerState = trainerState.copy(
+                pastTargetWord = trainerState.targetWord,
+                targetWord = EnglishWord(nextWord, nextCorrectWords)
+            )
 
-        getNextOtherWords()
+            getNextOtherWords()
+        }
     }
 
     private fun getNextOtherWords(){
@@ -85,7 +126,7 @@ class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() 
 
             do {
                 otherWord = trainerState.listWords.random().russianWords.firstOrNull {
-                    !listWords.contains(it) && !trainerState.targetWord.russianWords.contains(it)
+                    !listWords.contains(it)
                 }
             }while (otherWord == null)
 
@@ -101,9 +142,9 @@ class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() 
 
     }
 
-    private fun checkCorrectOfWords(chooseWord : String) {
+    private fun checkCorrectOfWords() {
         viewModelScope.launch {
-            if(trainerState.targetWord.russianWords.any { it == chooseWord}){
+            if(trainerState.targetWord.russianWords.any {trainerState.chooseWord.russianWords.contains(it)}){
                 trainerChannel.send(TrainerResults.CorrectedWord())
             }else{
                 trainerChannel.send(TrainerResults.NotCorrectedWord())
@@ -112,12 +153,11 @@ class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() 
     }
 
     private fun startTrainer(){
-        animationTrainerState = animationTrainerState.copy(
-             startTrainer = MutableTransitionState(false).apply { this.targetState = true }
-        )
+//        animationTrainerState = animationTrainerState.copy(
+//             startTrainer = MutableTransitionState(false).apply { this.targetState = true }
+//        )
 
         getNextWord()
-
     }
 
     private fun getEnglishWords(quantityWords : Int){
@@ -140,6 +180,54 @@ class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() 
         }
 
     }
+
+
+
+
+    private suspend fun playAnimationWords(){
+
+        suspend fun waitEndAnimation(){
+            while (!animationTrainerState.backForwardTrainer.second) {
+                delay(10)
+            }
+        }
+
+        suspendCoroutine{
+            viewModelScope.launch {
+                if(!trainerState.lastResult && trainerState.counterWord != 0){
+
+                    animationTrainerState = animationTrainerState.copy(
+                        backForwardTrainer = Pair(true, false)
+                    )
+
+                    waitEndAnimation()
+
+                    animationTrainerState = animationTrainerState.copy(
+                        backForwardTrainer = Pair(false, false)
+                    )
+
+                    waitEndAnimation()
+                }
+
+                if(trainerState.counterWord != 0){
+                    animationTrainerState = animationTrainerState.copy(
+                        shiftTargetWord = MutableTransitionState(true).apply { this.targetState = false },
+                        shiftListWords = MutableTransitionState(true).apply { this.targetState = false }
+                    )
+                }
+
+                delay(1500L)
+
+                animationTrainerState = animationTrainerState.copy(
+                    shiftTargetWord = MutableTransitionState(false).apply { this.targetState = true },
+                    shiftListWords = MutableTransitionState(false).apply { this.targetState = true }
+                )
+
+                it.resume(Unit)
+            }
+        }
+    }
+
 
 //    fun countResult(){
 //        val result = ResultTrainer(quantityWords, quantityCorrect)

@@ -105,6 +105,10 @@ class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() 
 
             playAnimationWords()
 
+            elementsTrainerState = elementsTrainerState.copy(
+                listItemsIsClickable = true
+            )
+
             val nextWord = trainerState.listWords[trainerState.counterWord].word
             val nextCorrectWords = trainerState.listWords[trainerState.counterWord].russianWords
 
@@ -181,9 +185,6 @@ class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() 
 
     }
 
-
-
-
     private suspend fun playAnimationWords(){
 
         suspend fun waitEndAnimation(){
@@ -196,17 +197,25 @@ class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() 
             viewModelScope.launch {
                 if(!trainerState.lastResult && trainerState.counterWord != 0){
 
-                    animationTrainerState = animationTrainerState.copy(
-                        backForwardTrainer = Pair(true, false)
+                    elementsTrainerState = elementsTrainerState.copy(
+                        listItemsIsClickable = false
                     )
 
-                    waitEndAnimation()
+                    repeat(3){
+                        animationTrainerState = animationTrainerState.copy(
+                            backForwardTrainer = Pair(true, false)
+                        )
 
-                    animationTrainerState = animationTrainerState.copy(
-                        backForwardTrainer = Pair(false, false)
-                    )
+                        waitEndAnimation()
 
-                    waitEndAnimation()
+                        animationTrainerState = animationTrainerState.copy(
+                            backForwardTrainer = Pair(false, false)
+                        )
+
+                        waitEndAnimation()
+
+                    }
+                    delay(500L)
                 }
 
                 if(trainerState.counterWord != 0){

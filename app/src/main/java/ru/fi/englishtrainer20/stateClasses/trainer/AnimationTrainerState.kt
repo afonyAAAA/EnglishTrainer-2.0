@@ -7,5 +7,5 @@ data class AnimationTrainerState(
     val shiftTargetWord : MutableTransitionState<Boolean> = MutableTransitionState(false),
     val shiftListWords : MutableTransitionState<Boolean> = MutableTransitionState(false),
     //Second value means end animation
-    val backForwardTrainer : Pair<Boolean, Boolean> = Pair(false, false)
+    val backForwardTrainer : Pair<Boolean, Boolean> = Pair(false, true)
 )

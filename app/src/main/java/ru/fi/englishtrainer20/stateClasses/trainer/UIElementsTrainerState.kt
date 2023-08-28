@@ -7,4 +7,5 @@ data class UIElementsTrainerState(
     val showSnackBarHost : Boolean = false,
     val statePositiveDialog : Boolean = false,
     val stateNegativeDialog : Boolean = false,
+    val listItemsIsClickable : Boolean = true
 )

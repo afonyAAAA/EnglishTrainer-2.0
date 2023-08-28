@@ -4,14 +4,8 @@ import android.annotation.SuppressLint
 import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.repeatable
-import androidx.compose.animation.core.snap
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
@@ -119,7 +113,8 @@ fun TrainerScreen(navHostController: NavHostController){
             AnimationTargetWord(visible = stateAnimationTrainer.shiftTargetWord) {
                 PresentCardWord(
                     word = stateTrainer.targetWord.word,
-                    backForwardAnimationState =stateAnimationTrainer.backForwardTrainer.first,
+                    backForwardAnimationState =stateAnimationTrainer.backForwardTrainer,
+                    isStartTrainer = trainerViewModel.trainerState.counterWord == 0,
                     onEndAnimation = {
                         trainerViewModel.onEvent(TrainerUIEvents.EndAnimationTransitionPresentWord)
                     }
@@ -241,20 +236,19 @@ fun AnimationListWords(
 @Composable
 fun PresentCardWord(
     word : String,
-    backForwardAnimationState : Boolean,
+    backForwardAnimationState : Pair<Boolean, Boolean>,
+    isStartTrainer : Boolean,
     onEndAnimation : () -> Unit
 ){
 
     val translationX : Float by animateFloatAsState(
-        targetValue = if(backForwardAnimationState) 100f else 0f,
-        animationSpec = repeatable(
-            iterations = 3,
-            animation = tween(100),
-            repeatMode = RepeatMode.Reverse
-        ),
+        targetValue = (if(backForwardAnimationState.second || isStartTrainer) 0f
+        else if(backForwardAnimationState.first) 100f
+        else if (!backForwardAnimationState.first) -100f else 0f),
+        animationSpec = tween(150),
         label = "",
         finishedListener = {
-            if(it == 0F) onEndAnimation()
+            onEndAnimation()
         }
     )
 
@@ -356,6 +350,8 @@ fun InfoWordsLayout(
         }
     }
 }
+
+
 @Composable
 fun InfoWordsLayout(
     correctWord : EnglishWord,
@@ -404,7 +400,7 @@ fun InfoWordsLayout(
 @Composable
 fun ListItemCardWord(
     word : String,
-    viewModel: TrainerViewModel
+    onClick: () -> Unit
 ){
     Card(
         modifier = Modifier
@@ -417,7 +413,7 @@ fun ListItemCardWord(
                 .fillMaxSize()
                 .padding(8.dp)
                 .clickable {
-                    viewModel.onEvent(TrainerUIEvents.UserChooseWord(word))
+                    onClick()
                 },
             contentAlignment = Alignment.Center
         ){
@@ -433,7 +429,14 @@ fun ListWords(words : List<String>, viewModel: TrainerViewModel){
     LazyColumn{
         items(items = words){ word ->
             AnimationListWords(visible = viewModel.animationTrainerState.shiftListWords) {
-                ListItemCardWord(word = word, viewModel)
+                ListItemCardWord(
+                    word = word,
+                    onClick = {
+                        if(viewModel.elementsTrainerState.listItemsIsClickable){
+                            viewModel.onEvent(TrainerUIEvents.UserChooseWord(word))
+                        }
+                    }
+                )
             }
         }
     }
@@ -445,7 +448,7 @@ fun PreviewTrainer(){
     Column(
         Modifier.fillMaxSize()
     ) {
-        PresentCardWord("fffff", false) {}
+       // PresentCardWord("fffff", false) {}
         //ListWords(arrayListOf("ffff", "ffff", "ffff"))
     }
 }

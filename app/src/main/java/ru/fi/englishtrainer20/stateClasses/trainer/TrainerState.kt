@@ -15,4 +15,5 @@ data class TrainerState(
     val quantityCorrect : Int = 0,
     val counterWord : Int = 0,
     val lastResult : Boolean = false,
+    val percentCorrect : Int = 0
 )

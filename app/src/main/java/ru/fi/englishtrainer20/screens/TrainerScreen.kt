@@ -55,6 +55,7 @@ import ru.fi.englishtrainer20.elementsInterface.CustomButton
 import ru.fi.englishtrainer20.elementsInterface.Fonts
 import ru.fi.englishtrainer20.events.TrainerUIEvents
 import ru.fi.englishtrainer20.models.EnglishWord
+import ru.fi.englishtrainer20.navigation.NavRoutes
 import ru.fi.englishtrainer20.repository.trainer.TrainerResults
 import ru.fi.englishtrainer20.stateClasses.trainer.TrainerState
 import ru.fi.englishtrainer20.stateClasses.trainer.UIElementsTrainerState
@@ -65,14 +66,19 @@ import ru.fi.englishtrainer20.viewModels.TrainerViewModel
 fun TrainerScreen(navHostController: NavHostController){
 
     val trainerViewModel : TrainerViewModel = koinViewModel()
-
     val context = LocalContext.current
-
-    ListenerResults(trainerViewModel = trainerViewModel, context = context)
 
     val stateAnimationTrainer = trainerViewModel.animationTrainerState
     val stateTrainer = trainerViewModel.trainerState
     val stateElementsTrainer = trainerViewModel.elementsTrainerState
+
+    ListenerResults(
+        trainerViewModel = trainerViewModel,
+        context = context,
+        endTrainerActions = {
+            navHostController.navigate(NavRoutes.EndTrainer.route + "/${stateTrainer.percentCorrect}")
+        }
+    )
 
     DialogWindows(
         stateElementsTrainer = stateElementsTrainer,
@@ -147,7 +153,11 @@ fun DialogWindows(
 }
 
 @Composable
-fun ListenerResults(trainerViewModel: TrainerViewModel, context : Context){
+fun ListenerResults(
+    trainerViewModel: TrainerViewModel,
+    context : Context,
+    endTrainerActions : () -> Unit
+){
     LaunchedEffect(trainerViewModel, context){
         trainerViewModel.trainerResults.collect{ result ->
             when(result){
@@ -164,6 +174,9 @@ fun ListenerResults(trainerViewModel: TrainerViewModel, context : Context){
                 }
                 is TrainerResults.WordsIsLoaded -> {
                     trainerViewModel.onEvent(TrainerUIEvents.TrainerIsReady)
+                }
+                is TrainerResults.TrainerIsEnd -> {
+                    endTrainerActions()
                 }
             }
         }

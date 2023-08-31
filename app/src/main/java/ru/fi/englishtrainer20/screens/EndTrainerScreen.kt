@@ -27,7 +27,10 @@ import ru.fi.englishtrainer20.elementsInterface.CustomButton
 
 
 @Composable
-fun EndTrainerScreen(navHostController: NavHostController){
+fun EndTrainerScreen(
+    navHostController: NavHostController,
+    percentCorrect : Int
+){
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -90,5 +93,5 @@ fun LoadingLineResult(){
 @Composable
 @Preview(showBackground = true)
 fun PreviewEndTrainer(){
-    EndTrainerScreen(navHostController = rememberNavController())
+    //EndTrainerScreen(navHostController = rememberNavController())
 }

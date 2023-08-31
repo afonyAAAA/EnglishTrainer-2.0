@@ -5,5 +5,5 @@ sealed class TrainerResults<T>(val data : T? = null){
     class CorrectedWord<T>(data: T? = null) : TrainerResults<T>(data)
     class WordsIsLoaded<T>(data: T? = null) : TrainerResults<T>(data)
     class UnknownError<T>(data: T? = null) : TrainerResults<T>(data)
-
+    class TrainerIsEnd<T>(data: T? = null) : TrainerResults<T>(data)
 }

@@ -1,5 +1,12 @@
 package ru.fi.englishtrainer20.screens
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.with
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,9 +16,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,7 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.delay
 import ru.fi.englishtrainer20.elementsInterface.CustomButton
 
 
@@ -36,7 +47,7 @@ fun EndTrainerScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(15.dp, Alignment.CenterVertically)
     ) {
-        PercentTrainer()
+        PercentTrainer(percentCorrect)
 
         LoadingLineResult()
 
@@ -54,13 +65,45 @@ fun EndTrainerScreen(
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun PercentTrainer(){
-    Text(
-        text = "100%",
-        fontSize = 60.sp
-    )
+fun PercentTrainer(limitPercent : Int){
+
+    var percent by remember{ mutableStateOf(0) }
+
+    LaunchedEffect(limitPercent){
+        while (limitPercent > percent){
+            percent++
+            when(percent){
+                in 0..5 -> delay(150L)
+                in 10..50 -> delay(100L)
+                in 50..100 -> delay(50L)
+            }
+        }
+    }
+
+    AnimatedContent(
+        targetState = percent,
+        label = "",
+        transitionSpec = {
+            slideIntoContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Up,
+                animationSpec = tween(durationMillis = 250)
+            ) togetherWith
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Down,
+                    animationSpec = tween(durationMillis = 250)
+                )
+        },
+        contentAlignment = Alignment.Center
+    ) { percent ->
+        Text(
+            text = "$percent%",
+            fontSize = 60.sp,
+        )
+    }
 }
+
 
 @Composable
 fun MessageUserOfResult(){

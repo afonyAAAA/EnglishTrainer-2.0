@@ -11,6 +11,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import ru.fi.englishtrainer20.events.TrainerUIEvents
 import ru.fi.englishtrainer20.models.EnglishWord
+import ru.fi.englishtrainer20.models.ResultTrainer
 import ru.fi.englishtrainer20.repository.trainer.TrainerRepository
 import ru.fi.englishtrainer20.repository.trainer.TrainerResults
 import ru.fi.englishtrainer20.stateClasses.trainer.AnimationTrainerState
@@ -29,7 +30,7 @@ class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() 
     val trainerResults = trainerChannel.receiveAsFlow()
 
     init {
-        getEnglishWords(10)
+        getEnglishWords(trainerState.quantityWords)
     }
 
     fun onEvent(e : TrainerUIEvents){
@@ -48,7 +49,11 @@ class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() 
                 getEnglishWords(e.quantityWords)
             }
             TrainerUIEvents.NextWord -> {
-                getNextWord()
+                if(trainerState.counterWord == trainerState.listWords.size){
+                    countResult()
+                }else{
+                    getNextWord()
+                }
             }
             TrainerUIEvents.TrainerIsReady -> {
                 startTrainer()
@@ -103,6 +108,8 @@ class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() 
     private fun getNextWord(){
         viewModelScope.launch {
 
+            trainerState = trainerState.copy(pastTargetWord = trainerState.targetWord)
+
             playAnimationWords()
 
             elementsTrainerState = elementsTrainerState.copy(
@@ -113,7 +120,6 @@ class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() 
             val nextCorrectWords = trainerState.listWords[trainerState.counterWord].russianWords
 
             trainerState = trainerState.copy(
-                pastTargetWord = trainerState.targetWord,
                 targetWord = EnglishWord(nextWord, nextCorrectWords)
             )
 
@@ -129,7 +135,11 @@ class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() 
             var otherWord : String? = null
 
             do {
-                otherWord = trainerState.listWords.random().russianWords.firstOrNull {
+                otherWord = trainerState.listWords
+                    .filter { it != trainerState.targetWord }
+                    .random()
+                    .russianWords
+                    .firstOrNull {
                     !listWords.contains(it)
                 }
             }while (otherWord == null)
@@ -141,7 +151,7 @@ class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() 
         listWords.add(correctWord)
 
         trainerState = trainerState.copy(
-            otherWords = listWords
+            otherWords = listWords.shuffled()
         )
 
     }
@@ -149,7 +159,11 @@ class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() 
     private fun checkCorrectOfWords() {
         viewModelScope.launch {
             if(trainerState.targetWord.russianWords.any {trainerState.chooseWord.russianWords.contains(it)}){
+
                 trainerChannel.send(TrainerResults.CorrectedWord())
+
+                trainerState = trainerState.copy(quantityCorrect = trainerState.quantityCorrect + 1)
+
             }else{
                 trainerChannel.send(TrainerResults.NotCorrectedWord())
             }
@@ -157,10 +171,6 @@ class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() 
     }
 
     private fun startTrainer(){
-//        animationTrainerState = animationTrainerState.copy(
-//             startTrainer = MutableTransitionState(false).apply { this.targetState = true }
-//        )
-
         getNextWord()
     }
 
@@ -237,9 +247,12 @@ class TrainerViewModel(private val repository: TrainerRepository) : ViewModel() 
         }
     }
 
-
-//    fun countResult(){
-//        val result = ResultTrainer(quantityWords, quantityCorrect)
-//    }
+    private fun countResult(){
+        viewModelScope.launch {
+            val result = ResultTrainer(trainerState.quantityWords, trainerState.quantityCorrect).percentCorrect
+            trainerState = trainerState.copy(percentCorrect = result)
+            trainerChannel.send(TrainerResults.TrainerIsEnd())
+        }
+    }
 
 }

@@ -28,7 +28,7 @@ class TrainerRepositoryImpl(private val db : FirebaseFirestore) : TrainerReposit
                 10
             }
             else -> {
-                15
+                0
             }
         }
 

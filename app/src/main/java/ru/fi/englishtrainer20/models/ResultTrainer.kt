@@ -4,5 +4,5 @@ data class ResultTrainer(
     val quantityWords : Int,
     val quantityCorrect : Int,
 ){
-    val percentCorrect : Double = (quantityCorrect / quantityWords).toDouble() * 100.0
+    val percentCorrect : Int = (quantityCorrect / quantityWords) * 100
 }

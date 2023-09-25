@@ -11,7 +11,7 @@ data class TrainerState(
     val chooseWord : EnglishWord = EnglishWord(),
     val pastTargetWord : EnglishWord = EnglishWord(),
     val otherWords : List<String> = listOf(),
-    val quantityWords : Int = 0,
+    val quantityWords : Int = 5,
     val quantityCorrect : Int = 0,
     val counterWord : Int = 0,
     val lastResult : Boolean = false,

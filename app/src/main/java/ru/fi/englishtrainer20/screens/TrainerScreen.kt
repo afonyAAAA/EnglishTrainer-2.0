@@ -67,7 +67,6 @@ fun TrainerScreen(navHostController: NavHostController){
 
     val trainerViewModel : TrainerViewModel = koinViewModel()
     val context = LocalContext.current
-
     val stateAnimationTrainer = trainerViewModel.animationTrainerState
     val stateTrainer = trainerViewModel.trainerState
     val stateElementsTrainer = trainerViewModel.elementsTrainerState
@@ -76,7 +75,7 @@ fun TrainerScreen(navHostController: NavHostController){
         trainerViewModel = trainerViewModel,
         context = context,
         endTrainerActions = {
-            navHostController.navigate(NavRoutes.EndTrainer.route + "/${stateTrainer.percentCorrect}")
+            navHostController.navigate("${NavRoutes.EndTrainer.route}/${trainerViewModel.trainerState.percentCorrect}")
         }
     )
 
@@ -220,7 +219,7 @@ fun AnimationTargetWord(
         enter = slideInHorizontally(animationSpec = TweenSpec(300, 200))
                 + expandHorizontally(expandFrom = Alignment.End)
                 + fadeIn(),
-        exit = slideOutHorizontally(targetOffsetX = {it -> it})
+        exit = slideOutHorizontally(targetOffsetX = {it})
                 + shrinkHorizontally()
                 + fadeOut()
     ) {
